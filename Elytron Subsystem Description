@@ -28,7 +28,7 @@
                             "type" => LIST,
                             "description" => "List of filters to be evaluated sequentially combining the results using 'or'.",
                             "expressions-allowed" => false,
-                            "nillable" => false,
+                            "nillable" => true,
                             "value-type" => {
                                 "predefined-filter" => {
                                     "type" => STRING,
@@ -134,7 +134,7 @@
                     "attributes" => {
                         "configuration" => {
                             "type" => OBJECT,
-                            "description" => "The optional kay/value configuration for the RoleMapper",
+                            "description" => "The optional key/value configuration for the RoleMapper",
                             "expressions-allowed" => false,
                             "nillable" => true,
                             "value-type" => STRING,
@@ -426,9 +426,9 @@
                 }}
             },
             "mapped-regex-realm-mapper" => {
-                "description" => "Definition of a custom RealmMapper",
+                "description" => "Definition of a RealmMapper implementation that first uses a regular expression to extract the realm name, this is then converted using the configured mapping of realm names.",
                 "model-description" => {"*" => {
-                    "description" => "Definition of a custom RealmMapper",
+                    "description" => "Definition of a RealmMapper implementation that first uses a regular expression to extract the realm name, this is then converted using the configured mapping of realm names.",
                     "capabilities" => [{
                         "name" => "org.wildfly.security.realm-mapper",
                         "dynamic" => true
@@ -577,9 +577,9 @@
                 }}
             },
             "trust-managers" => {
-                "description" => "A key manager definition for creating the TrustManager[] as used to create an SSLContext.",
+                "description" => "A trust manager definition for creating the TrustManager[] as used to create an SSLContext.",
                 "model-description" => {"*" => {
-                    "description" => "A key manager definition for creating the TrustManager[] as used to create an SSLContext.",
+                    "description" => "A trust manager definition for creating the TrustManager[] as used to create an SSLContext.",
                     "capabilities" => [{
                         "name" => "org.wildfly.security.trust-managers",
                         "dynamic" => true
@@ -602,6 +602,17 @@
                             "expressions-allowed" => true,
                             "nillable" => false,
                             "capability-reference" => "org.wildfly.security.key-store",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "provider" => {
+                            "type" => STRING,
+                            "description" => "The name of the provider to use to create the underlying TrustManagerFactory.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
                             "min-length" => 1L,
                             "max-length" => 2147483647L,
                             "access-type" => "read-write",
@@ -884,9 +895,9 @@
                 }}
             },
             "logical-role-mapper" => {
-                "description" => "A role mapper definition where a constant set of roles is always returned.",
+                "description" => "A RoleMapper definition for a RoleMapper that performs a logical operation using two referenced RoleMappers.",
                 "model-description" => {"*" => {
-                    "description" => "A role mapper definition where a constant set of roles is always returned.",
+                    "description" => "A RoleMapper definition for a RoleMapper that performs a logical operation using two referenced RoleMappers.",
                     "capabilities" => [{
                         "name" => "org.wildfly.security.role-mapper",
                         "dynamic" => true
@@ -955,6 +966,592 @@
                     "operations" => undefined,
                     "notifications" => undefined,
                     "children" => {}
+                }}
+            },
+            "ldap-key-store" => {
+                "description" => "A LdapKeyStore definition.",
+                "model-description" => {"*" => {
+                    "description" => "A LdapKeyStore definition.",
+                    "capabilities" => [{
+                        "name" => "org.wildfly.security.key-store",
+                        "dynamic" => true
+                    }],
+                    "attributes" => {
+                        "dir-context" => {
+                            "type" => STRING,
+                            "description" => "The name of DirContext, which will be used to communication with LDAP server.",
+                            "expressions-allowed" => true,
+                            "nillable" => false,
+                            "capability-reference" => "org.wildfly.security.dir-context",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "size" => {
+                            "type" => INT,
+                            "description" => "The size of LDAP KeyStore in amount of items/aliases.",
+                            "expressions-allowed" => false,
+                            "nillable" => false,
+                            "access-type" => "read-only",
+                            "storage" => "runtime"
+                        },
+                        "state" => {
+                            "type" => STRING,
+                            "description" => "The state of the underlying service that represents this KeyStore at runtime, if it is anything other than UP runtime operations will not be available.",
+                            "expressions-allowed" => false,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "allowed" => [
+                                "DOWN",
+                                "STARTING",
+                                "START_FAILED",
+                                "UP",
+                                "STOPPING",
+                                "REMOVED"
+                            ],
+                            "access-type" => "read-only",
+                            "storage" => "runtime"
+                        },
+                        "alias-attribute" => {
+                            "type" => STRING,
+                            "description" => "The name of LDAP attribute, where will be item alias stored.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "certificate-attribute" => {
+                            "type" => STRING,
+                            "description" => "The name of LDAP attribute, where will be certificate stored.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "certificate-chain-attribute" => {
+                            "type" => STRING,
+                            "description" => "The name of LDAP attribute, where will be certificate chain stored.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "certificate-chain-encoding" => {
+                            "type" => STRING,
+                            "description" => "The encoding of the certificate chain.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "certificate-type" => {
+                            "type" => STRING,
+                            "description" => "The type of the Certificate.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "key-attribute" => {
+                            "type" => STRING,
+                            "description" => "The name of LDAP attribute, where will be key stored.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "key-type" => {
+                            "type" => STRING,
+                            "description" => "The type of KeyStore, in which will be key serialized to LDAP attribute.",
+                            "attribute-group" => "attribute-mapping",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "new-item-attributes" => {
+                            "type" => LIST,
+                            "description" => "The LDAP attributes, which will be set for newly created items.",
+                            "attribute-group" => "new-item-template",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "value-type" => {
+                                "name" => {
+                                    "type" => STRING,
+                                    "description" => "The name of the LDAP attribute.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "value" => {
+                                    "type" => LIST,
+                                    "description" => "The value of LDAP attribute.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => false,
+                                    "value-type" => STRING
+                                }
+                            },
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "no-services"
+                        },
+                        "new-item-path" => {
+                            "type" => STRING,
+                            "description" => "The path in LDAP, where will be newly created KeyStore items stored.",
+                            "attribute-group" => "new-item-template",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "new-item-rdn" => {
+                            "type" => STRING,
+                            "description" => "The name of LDAP attribute, which will be used in RDN of newly created items.",
+                            "attribute-group" => "new-item-template",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "filter-alias" => {
+                            "type" => STRING,
+                            "description" => "The LDAP filter for obtaining item of the KeyStore by alias.",
+                            "attribute-group" => "search",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "filter-certificate" => {
+                            "type" => STRING,
+                            "description" => "The LDAP filter for obtaining item of the KeyStore by certificate.",
+                            "attribute-group" => "search",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "filter-iterate" => {
+                            "type" => STRING,
+                            "description" => "The LDAP filter for iterating over all items of the KeyStore.",
+                            "attribute-group" => "search",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "search-path" => {
+                            "type" => STRING,
+                            "description" => "The path in LDAP, where will be KeyStore items searched.",
+                            "attribute-group" => "search",
+                            "expressions-allowed" => true,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "search-recursive" => {
+                            "type" => BOOLEAN,
+                            "description" => "If the LDAP search should be recursive.",
+                            "attribute-group" => "search",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "search-time-limit" => {
+                            "type" => INT,
+                            "description" => "The time limit for obtaining keystore items from LDAP.",
+                            "attribute-group" => "search",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        }
+                    },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {"alias" => {
+                        "description" => "An individual alias within the KeyStore.",
+                        "model-description" => {"*" => {
+                            "description" => "An individual alias within the KeyStore.",
+                            "storage" => "runtime-only",
+                            "attributes" => {
+                                "certificate" => {
+                                    "type" => OBJECT,
+                                    "description" => "The certificate associated with the alias (Note: If the alias has a certificate chain this will always be undefined).",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "value-type" => {
+                                        "type" => {
+                                            "type" => STRING,
+                                            "description" => "The type of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "public-key" => {
+                                            "type" => OBJECT,
+                                            "description" => "The public key associated with the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "format" => {
+                                                    "type" => STRING,
+                                                    "description" => "The format of the public key.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "encoded" => {
+                                                    "type" => STRING,
+                                                    "description" => "The encoded value of the public key or certificate.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "finger-prints" => {
+                                            "type" => LIST,
+                                            "description" => "The finger prints for the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "value" => {
+                                                    "type" => STRING,
+                                                    "description" => "The value of the finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "encoded" => {
+                                            "type" => STRING,
+                                            "description" => "The encoded value of the public key or certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "subject" => {
+                                            "type" => STRING,
+                                            "description" => "The subject from the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "issuer" => {
+                                            "type" => STRING,
+                                            "description" => "The issuer of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-before" => {
+                                            "type" => STRING,
+                                            "description" => "The starting date and time the certificate is valid.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-after" => {
+                                            "type" => STRING,
+                                            "description" => "The expiration date and time of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "serial-number" => {
+                                            "type" => STRING,
+                                            "description" => "The serial number of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature-algorithm" => {
+                                            "type" => STRING,
+                                            "description" => "The algorithm used to generate the certificates signature.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature" => {
+                                            "type" => STRING,
+                                            "description" => "The signature of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "version" => {
+                                            "type" => STRING,
+                                            "description" => "The certificate version.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        }
+                                    },
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "certificate-chain" => {
+                                    "type" => LIST,
+                                    "description" => "The certificate chain associated with the alias.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "value-type" => {
+                                        "type" => {
+                                            "type" => STRING,
+                                            "description" => "The type of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "public-key" => {
+                                            "type" => OBJECT,
+                                            "description" => "The public key associated with the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "format" => {
+                                                    "type" => STRING,
+                                                    "description" => "The format of the public key.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "encoded" => {
+                                                    "type" => STRING,
+                                                    "description" => "The encoded value of the public key or certificate.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "finger-prints" => {
+                                            "type" => LIST,
+                                            "description" => "The finger prints for the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "value" => {
+                                                    "type" => STRING,
+                                                    "description" => "The value of the finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "encoded" => {
+                                            "type" => STRING,
+                                            "description" => "The encoded value of the public key or certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "subject" => {
+                                            "type" => STRING,
+                                            "description" => "The subject from the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "issuer" => {
+                                            "type" => STRING,
+                                            "description" => "The issuer of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-before" => {
+                                            "type" => STRING,
+                                            "description" => "The starting date and time the certificate is valid.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-after" => {
+                                            "type" => STRING,
+                                            "description" => "The expiration date and time of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "serial-number" => {
+                                            "type" => STRING,
+                                            "description" => "The serial number of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature-algorithm" => {
+                                            "type" => STRING,
+                                            "description" => "The algorithm used to generate the certificates signature.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature" => {
+                                            "type" => STRING,
+                                            "description" => "The signature of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "version" => {
+                                            "type" => STRING,
+                                            "description" => "The certificate version.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        }
+                                    },
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "creation-date" => {
+                                    "type" => STRING,
+                                    "description" => "The creation date of the entry represented by this alias.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "entry-type" => {
+                                    "type" => STRING,
+                                    "description" => "The type of the entry for this alias. Note: Unrecognised types will be reported as 'Other'.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "allowed" => [
+                                        "PasswordEntry",
+                                        "PrivateKeyEntry",
+                                        "SecretKeyEntry",
+                                        "TrustedCertificateEntry",
+                                        "Other"
+                                    ],
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                }
+                            },
+                            "operations" => undefined,
+                            "notifications" => undefined,
+                            "children" => {}
+                        }}
+                    }}
                 }}
             },
             "constant-name-rewriter" => {
@@ -1091,7 +1688,7 @@
                             "type" => LIST,
                             "description" => "The enabled protocols.",
                             "expressions-allowed" => true,
-                            "nillable" => false,
+                            "nillable" => true,
                             "allowed" => [
                                 "SSLv2",
                                 "SSLv3",
@@ -1212,7 +1809,7 @@
                                     "type" => LIST,
                                     "description" => "The local certificates from the SSLSession.",
                                     "expressions-allowed" => false,
-                                    "nillable" => false,
+                                    "nillable" => true,
                                     "value-type" => {
                                         "type" => {
                                             "type" => STRING,
@@ -1376,7 +1973,520 @@
                                     "type" => LIST,
                                     "description" => "The local certificates from the SSLSession.",
                                     "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "value-type" => {
+                                        "type" => {
+                                            "type" => STRING,
+                                            "description" => "The type of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "public-key" => {
+                                            "type" => OBJECT,
+                                            "description" => "The public key associated with the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "format" => {
+                                                    "type" => STRING,
+                                                    "description" => "The format of the public key.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "encoded" => {
+                                                    "type" => STRING,
+                                                    "description" => "The encoded value of the public key or certificate.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "finger-prints" => {
+                                            "type" => LIST,
+                                            "description" => "The finger prints for the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "value" => {
+                                                    "type" => STRING,
+                                                    "description" => "The value of the finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "encoded" => {
+                                            "type" => STRING,
+                                            "description" => "The encoded value of the public key or certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "subject" => {
+                                            "type" => STRING,
+                                            "description" => "The subject from the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "issuer" => {
+                                            "type" => STRING,
+                                            "description" => "The issuer of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-before" => {
+                                            "type" => STRING,
+                                            "description" => "The starting date and time the certificate is valid.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-after" => {
+                                            "type" => STRING,
+                                            "description" => "The expiration date and time of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "serial-number" => {
+                                            "type" => STRING,
+                                            "description" => "The serial number of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature-algorithm" => {
+                                            "type" => STRING,
+                                            "description" => "The algorithm used to generate the certificates signature.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature" => {
+                                            "type" => STRING,
+                                            "description" => "The signature of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "version" => {
+                                            "type" => STRING,
+                                            "description" => "The certificate version.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        }
+                                    },
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "peer-host" => {
+                                    "type" => STRING,
+                                    "description" => "The peer host as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
                                     "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "peer-port" => {
+                                    "type" => INT,
+                                    "description" => "The peer port as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "peer-principal" => {
+                                    "type" => STRING,
+                                    "description" => "The peer principal as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "protocol" => {
+                                    "type" => STRING,
+                                    "description" => "The protocol as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "valid" => {
+                                    "type" => BOOLEAN,
+                                    "description" => "The validity of the session as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                }
+                            },
+                            "operations" => undefined,
+                            "notifications" => undefined,
+                            "children" => {}
+                        }}
+                    }}
+                }}
+            },
+            "client-ssl-context" => {
+                "description" => "An SSLContext for use on the client side of a connection.",
+                "model-description" => {"*" => {
+                    "description" => "An SSLContext for use on the client side of a connection.",
+                    "capabilities" => [{
+                        "name" => "org.wildfly.security.ssl-context",
+                        "dynamic" => true
+                    }],
+                    "attributes" => {
+                        "active-session-count" => {
+                            "type" => INT,
+                            "description" => "The count of current active sessions.",
+                            "expressions-allowed" => false,
+                            "nillable" => false,
+                            "access-type" => "read-only",
+                            "storage" => "runtime"
+                        },
+                        "cipher-suite-filter" => {
+                            "type" => STRING,
+                            "description" => "The filter to apply to specify the enabled cipher suites.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "key-managers" => {
+                            "type" => STRING,
+                            "description" => "Reference to the key managers to use within the SSLContext.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "capability-reference" => "org.wildfly.security.key-managers",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "maximum-session-cache-size" => {
+                            "type" => INT,
+                            "description" => "The maximum number of SSL sessions to be cached.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "default" => 0,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "protocols" => {
+                            "type" => LIST,
+                            "description" => "The enabled protocols.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "allowed" => [
+                                "SSLv2",
+                                "SSLv3",
+                                "TLSv1",
+                                "TLSv1_1",
+                                "TLSv1_2",
+                                "TLSv1_3"
+                            ],
+                            "value-type" => STRING,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "provider-loader" => {
+                            "type" => STRING,
+                            "description" => "Reference to the Provider[] to use to load the SSLContext.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "capability-reference" => "org.wildfly.security.providers",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "session-timeout" => {
+                            "type" => INT,
+                            "description" => "The timeout for SSL sessions.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "default" => 0,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "trust-managers" => {
+                            "type" => STRING,
+                            "description" => "Reference to the trust managers to use within the SSLContext.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "capability-reference" => "org.wildfly.security.trust-managers",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        }
+                    },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {"ssl-session" => {
+                        "description" => "A currently established SSL session.",
+                        "model-description" => {"*" => {
+                            "description" => "A currently established SSL session.",
+                            "storage" => "runtime-only",
+                            "attributes" => {
+                                "application-buffer-size" => {
+                                    "type" => INT,
+                                    "description" => "The application buffer size as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "cipher-suite" => {
+                                    "type" => STRING,
+                                    "description" => "The selected cipher suite as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "creation-time" => {
+                                    "type" => STRING,
+                                    "description" => "The creation time as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "last-accessed-time" => {
+                                    "type" => STRING,
+                                    "description" => "The last accessed time as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "local-certificates" => {
+                                    "type" => LIST,
+                                    "description" => "The local certificates from the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "value-type" => {
+                                        "type" => {
+                                            "type" => STRING,
+                                            "description" => "The type of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "public-key" => {
+                                            "type" => OBJECT,
+                                            "description" => "The public key associated with the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "format" => {
+                                                    "type" => STRING,
+                                                    "description" => "The format of the public key.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "encoded" => {
+                                                    "type" => STRING,
+                                                    "description" => "The encoded value of the public key or certificate.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "finger-prints" => {
+                                            "type" => LIST,
+                                            "description" => "The finger prints for the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "value" => {
+                                                    "type" => STRING,
+                                                    "description" => "The value of the finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "encoded" => {
+                                            "type" => STRING,
+                                            "description" => "The encoded value of the public key or certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "subject" => {
+                                            "type" => STRING,
+                                            "description" => "The subject from the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "issuer" => {
+                                            "type" => STRING,
+                                            "description" => "The issuer of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-before" => {
+                                            "type" => STRING,
+                                            "description" => "The starting date and time the certificate is valid.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-after" => {
+                                            "type" => STRING,
+                                            "description" => "The expiration date and time of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "serial-number" => {
+                                            "type" => STRING,
+                                            "description" => "The serial number of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature-algorithm" => {
+                                            "type" => STRING,
+                                            "description" => "The algorithm used to generate the certificates signature.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature" => {
+                                            "type" => STRING,
+                                            "description" => "The signature of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "version" => {
+                                            "type" => STRING,
+                                            "description" => "The certificate version.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        }
+                                    },
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "local-principal" => {
+                                    "type" => STRING,
+                                    "description" => "The local principal as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "packet-buffer-size" => {
+                                    "type" => INT,
+                                    "description" => "The packet buffer size as reported by the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "peer-certificates" => {
+                                    "type" => LIST,
+                                    "description" => "The local certificates from the SSLSession.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
                                     "value-type" => {
                                         "type" => {
                                             "type" => STRING,
@@ -1573,9 +2683,9 @@
                 }}
             },
             "simple-regex-realm-mapper" => {
-                "description" => "Definition of a custom RealmMapper",
+                "description" => "Definition of a simple RealmMapper that attempts to extract the realm name using the capture group from the regular expression, if that does not provide a match then the delegate RealmMapper is used instead.",
                 "model-description" => {"*" => {
-                    "description" => "Definition of a custom RealmMapper",
+                    "description" => "Definition of a simple RealmMapper that attempts to extract the realm name using the capture group from the regular expression, if that does not provide a match then the delegate RealmMapper is used instead.",
                     "capabilities" => [{
                         "name" => "org.wildfly.security.realm-mapper",
                         "dynamic" => true
@@ -1688,7 +2798,7 @@
                             "type" => LIST,
                             "description" => "The defined permission mappings.",
                             "expressions-allowed" => false,
-                            "nillable" => false,
+                            "nillable" => true,
                             "value-type" => {
                                 "principals" => {
                                     "type" => LIST,
@@ -1708,7 +2818,7 @@
                                     "type" => LIST,
                                     "description" => "The permissions to assign in the event of a match.",
                                     "expressions-allowed" => false,
-                                    "nillable" => false,
+                                    "nillable" => true,
                                     "value-type" => {
                                         "class-name" => {
                                             "type" => STRING,
@@ -1753,6 +2863,392 @@
                     "operations" => undefined,
                     "notifications" => undefined,
                     "children" => {}
+                }}
+            },
+            "filtering-key-store" => {
+                "description" => "A filtering KeyStore definition.",
+                "model-description" => {"*" => {
+                    "description" => "A filtering KeyStore definition.",
+                    "capabilities" => [{
+                        "name" => "org.wildfly.security.key-store",
+                        "dynamic" => true
+                    }],
+                    "attributes" => {
+                        "alias-filter" => {
+                            "type" => STRING,
+                            "description" => "A filter to apply to the aliases returned from the KeyStore, can either be a comma separated list of aliases to return or one of the following formats ALL:-alias1:-alias2, NONE:+alias1:+alias2",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "key-store" => {
+                            "type" => STRING,
+                            "description" => "Name of filtered KeyStore.",
+                            "expressions-allowed" => true,
+                            "nillable" => false,
+                            "capability-reference" => "org.wildfly.security.key-store",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "state" => {
+                            "type" => STRING,
+                            "description" => "The state of the underlying service that represents this KeyStore at runtime, if it is anything other than UP runtime operations will not be available.",
+                            "expressions-allowed" => false,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "allowed" => [
+                                "DOWN",
+                                "STARTING",
+                                "START_FAILED",
+                                "UP",
+                                "STOPPING",
+                                "REMOVED"
+                            ],
+                            "access-type" => "read-only",
+                            "storage" => "runtime"
+                        }
+                    },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {"alias" => {
+                        "description" => "An individual alias within the filtering KeyStore.",
+                        "model-description" => {"*" => {
+                            "description" => "An individual alias within the KeyStore.",
+                            "storage" => "runtime-only",
+                            "attributes" => {
+                                "certificate" => {
+                                    "type" => OBJECT,
+                                    "description" => "The certificate associated with the alias (Note: If the alias has a certificate chain this will always be undefined).",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "value-type" => {
+                                        "type" => {
+                                            "type" => STRING,
+                                            "description" => "The type of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "public-key" => {
+                                            "type" => OBJECT,
+                                            "description" => "The public key associated with the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "format" => {
+                                                    "type" => STRING,
+                                                    "description" => "The format of the public key.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "encoded" => {
+                                                    "type" => STRING,
+                                                    "description" => "The encoded value of the public key or certificate.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "finger-prints" => {
+                                            "type" => LIST,
+                                            "description" => "The finger prints for the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "value" => {
+                                                    "type" => STRING,
+                                                    "description" => "The value of the finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "encoded" => {
+                                            "type" => STRING,
+                                            "description" => "The encoded value of the public key or certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "subject" => {
+                                            "type" => STRING,
+                                            "description" => "The subject from the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "issuer" => {
+                                            "type" => STRING,
+                                            "description" => "The issuer of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-before" => {
+                                            "type" => STRING,
+                                            "description" => "The starting date and time the certificate is valid.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-after" => {
+                                            "type" => STRING,
+                                            "description" => "The expiration date and time of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "serial-number" => {
+                                            "type" => STRING,
+                                            "description" => "The serial number of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature-algorithm" => {
+                                            "type" => STRING,
+                                            "description" => "The algorithm used to generate the certificates signature.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature" => {
+                                            "type" => STRING,
+                                            "description" => "The signature of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "version" => {
+                                            "type" => STRING,
+                                            "description" => "The certificate version.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        }
+                                    },
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "certificate-chain" => {
+                                    "type" => LIST,
+                                    "description" => "The certificate chain associated with the alias.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "value-type" => {
+                                        "type" => {
+                                            "type" => STRING,
+                                            "description" => "The type of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "public-key" => {
+                                            "type" => OBJECT,
+                                            "description" => "The public key associated with the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "format" => {
+                                                    "type" => STRING,
+                                                    "description" => "The format of the public key.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "encoded" => {
+                                                    "type" => STRING,
+                                                    "description" => "The encoded value of the public key or certificate.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "finger-prints" => {
+                                            "type" => LIST,
+                                            "description" => "The finger prints for the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "value-type" => {
+                                                "algorithm" => {
+                                                    "type" => STRING,
+                                                    "description" => "The algorithm of the public key or finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                },
+                                                "value" => {
+                                                    "type" => STRING,
+                                                    "description" => "The value of the finger print.",
+                                                    "expressions-allowed" => false,
+                                                    "nillable" => false,
+                                                    "min-length" => 1L,
+                                                    "max-length" => 2147483647L
+                                                }
+                                            }
+                                        },
+                                        "encoded" => {
+                                            "type" => STRING,
+                                            "description" => "The encoded value of the public key or certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "subject" => {
+                                            "type" => STRING,
+                                            "description" => "The subject from the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "issuer" => {
+                                            "type" => STRING,
+                                            "description" => "The issuer of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-before" => {
+                                            "type" => STRING,
+                                            "description" => "The starting date and time the certificate is valid.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "not-after" => {
+                                            "type" => STRING,
+                                            "description" => "The expiration date and time of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "serial-number" => {
+                                            "type" => STRING,
+                                            "description" => "The serial number of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature-algorithm" => {
+                                            "type" => STRING,
+                                            "description" => "The algorithm used to generate the certificates signature.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "signature" => {
+                                            "type" => STRING,
+                                            "description" => "The signature of the certificate.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "version" => {
+                                            "type" => STRING,
+                                            "description" => "The certificate version.",
+                                            "expressions-allowed" => false,
+                                            "nillable" => true,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        }
+                                    },
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "creation-date" => {
+                                    "type" => STRING,
+                                    "description" => "The creation date of the entry represented by this alias.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                },
+                                "entry-type" => {
+                                    "type" => STRING,
+                                    "description" => "The type of the entry for this alias. Note: Unrecognised types will be reported as 'Other'.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "allowed" => [
+                                        "PasswordEntry",
+                                        "PrivateKeyEntry",
+                                        "SecretKeyEntry",
+                                        "TrustedCertificateEntry",
+                                        "Other"
+                                    ],
+                                    "access-type" => "read-only",
+                                    "storage" => "runtime"
+                                }
+                            },
+                            "operations" => undefined,
+                            "notifications" => undefined,
+                            "children" => {}
+                        }}
+                    }}
                 }}
             },
             "x500-attribute-principal-decoder" => {
@@ -1823,6 +3319,124 @@
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "default" => 0,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        }
+                    },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {}
+                }}
+            },
+            "token-realm" => {
+                "description" => "A security realm definition capable of validating and extracting identities from security tokens.",
+                "model-description" => {"*" => {
+                    "description" => "A security realm definition capable of validating and extracting identities from security tokens.",
+                    "capabilities" => [
+                        {
+                            "name" => "org.wildfly.security.security-realm",
+                            "dynamic" => true
+                        },
+                        {
+                            "name" => "org.wildfly.security.modifiable-security-realm",
+                            "dynamic" => true
+                        }
+                    ],
+                    "attributes" => {
+                        "jwt" => {
+                            "type" => OBJECT,
+                            "description" => "A token validator to be used in conjunction with a token-based realm that handles security tokens based on the JWT/JWS standard.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "value-type" => {
+                                "issuer" => {
+                                    "type" => LIST,
+                                    "description" => "A list of strings representing the issuers supported by this configuration. During validation JWT tokens must have an <code>iss</code> claim that contains one of the values defined here.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => true,
+                                    "value-type" => STRING
+                                },
+                                "audience" => {
+                                    "type" => LIST,
+                                    "description" => "A list of strings representing the audiences supported by this configuration. During validation JWT tokens must have an <code>aud</code> claim that contains one of the values defined here.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => true,
+                                    "value-type" => STRING
+                                },
+                                "public-key" => {
+                                    "type" => STRING,
+                                    "description" => "A public key in PEM Format. During validation, if a public key is provided, signature will be verified based on the key you provided here.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                }
+                            },
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "oauth2-introspection" => {
+                            "type" => OBJECT,
+                            "description" => "A token validator to be used in conjunction with a token-based realm that handles security tokens based on the JWT/JWS standard.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "value-type" => {
+                                "client-id" => {
+                                    "type" => STRING,
+                                    "description" => "A list of strings representing the issuers supported by this configuration. During validation JWT tokens must have an <code>iss</code> claim that contains one of the values defined here.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "client-secret" => {
+                                    "type" => STRING,
+                                    "description" => "A list of strings representing the audiences supported by this configuration. During validation JWT tokens must have an <code>aud</code> claim that contains one of the values defined here.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "introspection-url" => {
+                                    "type" => STRING,
+                                    "description" => "A public key in PEM Format. During validation, if a public key is provided, signature will be verified based on the key you provided here.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "client-ssl-context" => {
+                                    "type" => STRING,
+                                    "description" => "A list of strings representing the audiences supported by this configuration. During validation JWT tokens must have an <code>aud</code> claim that contains one of the values defined here.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "capability-reference" => "org.wildfly.security.ssl-context",
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "host-name-verification-policy" => {
+                                    "type" => STRING,
+                                    "description" => "A policy that defines how host names should be verified when using HTTPS.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "default" => "ANY",
+                                    "allowed" => ["ANY"]
+                                }
+                            },
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "principal-claim" => {
+                            "type" => STRING,
+                            "description" => "The name of the claim that should be used to obtain the principal's name.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "default" => "username",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
                             "access-type" => "read-write",
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
@@ -1976,6 +3590,17 @@
                             "access-type" => "read-only",
                             "storage" => "configuration"
                         },
+                        "ssl-context" => {
+                            "type" => STRING,
+                            "description" => "SSL context to connect to the LDAP server.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "capability-reference" => "org.wildfly.security.ssl-context",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-only",
+                            "storage" => "configuration"
+                        },
                         "url" => {
                             "type" => STRING,
                             "description" => "The connection url.",
@@ -2038,7 +3663,7 @@
                             "type" => LIST,
                             "description" => "Filtering to be applied to enable / disable mechanisms based on the name.",
                             "expressions-allowed" => false,
-                            "nillable" => false,
+                            "nillable" => true,
                             "value-type" => {
                                 "pattern-filter" => {
                                     "type" => STRING,
@@ -2575,7 +4200,7 @@
                                     "type" => LIST,
                                     "description" => "Configuration properties to be applied to the loaded provider. (Can not be set at the same time as path)",
                                     "expressions-allowed" => false,
-                                    "nillable" => false,
+                                    "nillable" => true,
                                     "alternatives" => ["path"],
                                     "value-type" => {
                                         "index" => {
@@ -3514,6 +5139,17 @@
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         },
+                        "provider" => {
+                            "type" => STRING,
+                            "description" => "The name of the provider to use to create the underlying KeyManagerFactory.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
                         "provider-loader" => {
                             "type" => STRING,
                             "description" => "Reference to obtain the Provider[] to use when creating the underlying KeyManagerFactory.",
@@ -4133,7 +5769,7 @@
                                     "type" => LIST,
                                     "description" => "The certificate chain associated with the alias.",
                                     "expressions-allowed" => false,
-                                    "nillable" => false,
+                                    "nillable" => true,
                                     "value-type" => {
                                         "type" => {
                                             "type" => STRING,
