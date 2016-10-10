@@ -461,13 +461,69 @@
                             "type" => OBJECT,
                             "description" => "Mapping of realm name extracted using the regular expression to a defined realm name.",
                             "expressions-allowed" => false,
-                            "nillable" => true,
+                            "nillable" => false,
                             "value-type" => STRING,
                             "access-type" => "read-write",
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         }
                     },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {}
+                }}
+            },
+            "constant-permission-mapper" => {
+                "description" => "Definition of a permission mapper that always returns the same constant.",
+                "model-description" => {"*" => {
+                    "description" => "Definition of a permission mapper that always returns the same constant.",
+                    "capabilities" => [{
+                        "name" => "org.wildfly.security.permission-mapper",
+                        "dynamic" => true
+                    }],
+                    "attributes" => {"permissions" => {
+                        "type" => LIST,
+                        "description" => "The permissions to assign.",
+                        "expressions-allowed" => false,
+                        "nillable" => true,
+                        "value-type" => {
+                            "class-name" => {
+                                "type" => STRING,
+                                "description" => "The fully qualified class name of the permission.",
+                                "expressions-allowed" => true,
+                                "nillable" => false,
+                                "min-length" => 1L,
+                                "max-length" => 2147483647L
+                            },
+                            "module" => {
+                                "type" => STRING,
+                                "description" => "The module to use to load the permission.",
+                                "expressions-allowed" => true,
+                                "nillable" => true,
+                                "min-length" => 1L,
+                                "max-length" => 2147483647L
+                            },
+                            "target-name" => {
+                                "type" => STRING,
+                                "description" => "The target name to pass to the permission as it is constructed.",
+                                "expressions-allowed" => true,
+                                "nillable" => true,
+                                "min-length" => 1L,
+                                "max-length" => 2147483647L
+                            },
+                            "action" => {
+                                "type" => STRING,
+                                "description" => "The action to pass to the permission as it is constructed.",
+                                "expressions-allowed" => true,
+                                "nillable" => true,
+                                "min-length" => 1L,
+                                "max-length" => 2147483647L
+                            }
+                        },
+                        "access-type" => "read-write",
+                        "storage" => "configuration",
+                        "restart-required" => "no-services"
+                    }},
                     "operations" => undefined,
                     "notifications" => undefined,
                     "children" => {}
@@ -1748,6 +1804,16 @@
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         },
+                        "use-cipher-suites-order" => {
+                            "type" => BOOLEAN,
+                            "description" => "To honor local cipher suites preference.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "default" => true,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
                         "want-client-auth" => {
                             "type" => BOOLEAN,
                             "description" => "Set wantClientAuth on the underlying SSLContext - if a security domain is referenced this will automatically be set to true.",
@@ -2267,6 +2333,16 @@
                             "capability-reference" => "org.wildfly.security.trust-managers",
                             "min-length" => 1L,
                             "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "use-cipher-suites-order" => {
+                            "type" => BOOLEAN,
+                            "description" => "To honor local cipher suites preference.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "default" => true,
                             "access-type" => "read-write",
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
@@ -2878,7 +2954,7 @@
                             "type" => STRING,
                             "description" => "A filter to apply to the aliases returned from the KeyStore, can either be a comma separated list of aliases to return or one of the following formats ALL:-alias1:-alias2, NONE:+alias1:+alias2",
                             "expressions-allowed" => true,
-                            "nillable" => true,
+                            "nillable" => false,
                             "min-length" => 1L,
                             "max-length" => 2147483647L,
                             "access-type" => "read-write",
@@ -3605,7 +3681,7 @@
                             "type" => STRING,
                             "description" => "The connection url.",
                             "expressions-allowed" => true,
-                            "nillable" => true,
+                            "nillable" => false,
                             "min-length" => 1L,
                             "max-length" => 2147483647L,
                             "access-type" => "read-only",
@@ -5112,6 +5188,21 @@
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         },
+                        "key-password" => {
+                            "type" => STRING,
+                            "description" => "The password to decrypt KeyStore item. (Not a password of the KeyStore.)",
+                            "expressions-allowed" => true,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "deprecated" => {
+                                "since" => "1.0.0",
+                                "reason" => "Will be updated to use proper CredentialStore references."
+                            },
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
                         "key-store" => {
                             "type" => STRING,
                             "description" => "Reference to the KeyStore to use to initialise the underlying KeyManagerFactory.",
@@ -5120,21 +5211,6 @@
                             "capability-reference" => "org.wildfly.security.key-store",
                             "min-length" => 1L,
                             "max-length" => 2147483647L,
-                            "access-type" => "read-write",
-                            "storage" => "configuration",
-                            "restart-required" => "resource-services"
-                        },
-                        "password" => {
-                            "type" => STRING,
-                            "description" => "The password to use when initialising the underlying KeyManagerFactory.",
-                            "expressions-allowed" => true,
-                            "nillable" => true,
-                            "min-length" => 1L,
-                            "max-length" => 2147483647L,
-                            "deprecated" => {
-                                "since" => "1.0.0",
-                                "reason" => "Will be updated to use proper CredentialStore references."
-                            },
                             "access-type" => "read-write",
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
@@ -6103,9 +6179,9 @@
                     "attributes" => {
                         "match" => {
                             "type" => BOOLEAN,
-                            "description" => "Should names that match the pattern be rejected or names that don't",
+                            "description" => "If the name must match the pattern. Otherwise the name must not match the pattern.",
                             "expressions-allowed" => true,
-                            "nillable" => false,
+                            "nillable" => true,
                             "default" => true,
                             "access-type" => "read-write",
                             "storage" => "configuration",
@@ -6113,7 +6189,7 @@
                         },
                         "pattern" => {
                             "type" => STRING,
-                            "description" => "The regular expression to use to locate the portion of the name to be replaced.",
+                            "description" => "The regular expression to use for the name validation.",
                             "expressions-allowed" => true,
                             "nillable" => false,
                             "min-length" => 1L,
