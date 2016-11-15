@@ -411,20 +411,6 @@
                     "children" => {}
                 }}
             },
-            "empty-role-decoder" => {
-                "description" => "Definition of an empty RoleDecoder that never returns any roles.",
-                "model-description" => {"*" => {
-                    "description" => "Definition of an empty RoleDecoder that never returns any roles.",
-                    "capabilities" => [{
-                        "name" => "org.wildfly.security.role-decoder",
-                        "dynamic" => true
-                    }],
-                    "attributes" => {},
-                    "operations" => undefined,
-                    "notifications" => undefined,
-                    "children" => {}
-                }}
-            },
             "mapped-regex-realm-mapper" => {
                 "description" => "Definition of a RealmMapper implementation that first uses a regular expression to extract the realm name, this is then converted using the configured mapping of realm names.",
                 "model-description" => {"*" => {
@@ -560,14 +546,14 @@
                                     "type" => STRING,
                                     "description" => "The path to the file containing the users and their groups.",
                                     "expressions-allowed" => true,
-                                    "nillable" => true,
+                                    "nillable" => false,
                                     "min-length" => 1L,
                                     "max-length" => 2147483647L
                                 },
                                 "relative-to" => {
                                     "type" => STRING,
                                     "description" => "The pre-defined path the path is relative to.",
-                                    "expressions-allowed" => true,
+                                    "expressions-allowed" => false,
                                     "nillable" => true,
                                     "requires" => ["path"],
                                     "min-length" => 1L,
@@ -608,14 +594,14 @@
                                     "type" => STRING,
                                     "description" => "The path to the file containing the users and their passwords.",
                                     "expressions-allowed" => true,
-                                    "nillable" => true,
+                                    "nillable" => false,
                                     "min-length" => 1L,
                                     "max-length" => 2147483647L
                                 },
                                 "relative-to" => {
                                     "type" => STRING,
                                     "description" => "The pre-defined path the path is relative to.",
-                                    "expressions-allowed" => true,
+                                    "expressions-allowed" => false,
                                     "nillable" => true,
                                     "requires" => ["path"],
                                     "min-length" => 1L,
@@ -636,10 +622,16 @@
                 "description" => "A trust manager definition for creating the TrustManager[] as used to create an SSLContext.",
                 "model-description" => {"*" => {
                     "description" => "A trust manager definition for creating the TrustManager[] as used to create an SSLContext.",
-                    "capabilities" => [{
-                        "name" => "org.wildfly.security.trust-managers",
-                        "dynamic" => true
-                    }],
+                    "capabilities" => [
+                        {
+                            "name" => "org.wildfly.security.credential-store-client",
+                            "dynamic" => true
+                        },
+                        {
+                            "name" => "org.wildfly.security.trust-managers",
+                            "dynamic" => true
+                        }
+                    ],
                     "attributes" => {
                         "algorithm" => {
                             "type" => STRING,
@@ -926,7 +918,7 @@
                             "type" => STRING,
                             "description" => "The pre-defined path the path is relative to.",
                             "attribute-group" => "file",
-                            "expressions-allowed" => true,
+                            "expressions-allowed" => false,
                             "nillable" => true,
                             "requires" => ["path"],
                             "min-length" => 1L,
@@ -1045,6 +1037,68 @@
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         },
+                        "new-item-template" => {
+                            "type" => OBJECT,
+                            "description" => "Configuration for item creation. Define how will look LDAP entry of newly created keystore item.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "value-type" => {
+                                "new-item-path" => {
+                                    "type" => STRING,
+                                    "description" => "The path in LDAP, where will be newly created KeyStore items stored.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => false,
+                                    "requires" => [
+                                        "new-item-rdn",
+                                        "new-item-attributes"
+                                    ],
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "new-item-rdn" => {
+                                    "type" => STRING,
+                                    "description" => "The name of LDAP attribute, which will be used in RDN of newly created items.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => false,
+                                    "requires" => [
+                                        "new-item-path",
+                                        "new-item-attributes"
+                                    ],
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "new-item-attributes" => {
+                                    "type" => LIST,
+                                    "description" => "The LDAP attributes, which will be set for newly created items.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "requires" => [
+                                        "new-item-path",
+                                        "new-item-rdn"
+                                    ],
+                                    "value-type" => {
+                                        "name" => {
+                                            "type" => STRING,
+                                            "description" => "The name of the LDAP attribute.",
+                                            "expressions-allowed" => true,
+                                            "nillable" => false,
+                                            "min-length" => 1L,
+                                            "max-length" => 2147483647L
+                                        },
+                                        "value" => {
+                                            "type" => LIST,
+                                            "description" => "The value of LDAP attribute.",
+                                            "expressions-allowed" => true,
+                                            "nillable" => false,
+                                            "value-type" => STRING
+                                        }
+                                    }
+                                }
+                            },
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "no-services"
+                        },
                         "size" => {
                             "type" => INT,
                             "description" => "The size of LDAP KeyStore in amount of items/aliases.",
@@ -1147,57 +1201,6 @@
                             "type" => STRING,
                             "description" => "The type of KeyStore, in which will be key serialized to LDAP attribute.",
                             "attribute-group" => "attribute-mapping",
-                            "expressions-allowed" => true,
-                            "nillable" => true,
-                            "min-length" => 1L,
-                            "max-length" => 2147483647L,
-                            "access-type" => "read-write",
-                            "storage" => "configuration",
-                            "restart-required" => "resource-services"
-                        },
-                        "new-item-attributes" => {
-                            "type" => LIST,
-                            "description" => "The LDAP attributes, which will be set for newly created items.",
-                            "attribute-group" => "new-item-template",
-                            "expressions-allowed" => false,
-                            "nillable" => true,
-                            "value-type" => {
-                                "name" => {
-                                    "type" => STRING,
-                                    "description" => "The name of the LDAP attribute.",
-                                    "expressions-allowed" => true,
-                                    "nillable" => true,
-                                    "min-length" => 1L,
-                                    "max-length" => 2147483647L
-                                },
-                                "value" => {
-                                    "type" => LIST,
-                                    "description" => "The value of LDAP attribute.",
-                                    "expressions-allowed" => true,
-                                    "nillable" => false,
-                                    "value-type" => STRING
-                                }
-                            },
-                            "access-type" => "read-write",
-                            "storage" => "configuration",
-                            "restart-required" => "no-services"
-                        },
-                        "new-item-path" => {
-                            "type" => STRING,
-                            "description" => "The path in LDAP, where will be newly created KeyStore items stored.",
-                            "attribute-group" => "new-item-template",
-                            "expressions-allowed" => true,
-                            "nillable" => true,
-                            "min-length" => 1L,
-                            "max-length" => 2147483647L,
-                            "access-type" => "read-write",
-                            "storage" => "configuration",
-                            "restart-required" => "resource-services"
-                        },
-                        "new-item-rdn" => {
-                            "type" => STRING,
-                            "description" => "The name of LDAP attribute, which will be used in RDN of newly created items.",
-                            "attribute-group" => "new-item-template",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "min-length" => 1L,
@@ -1689,7 +1692,7 @@
                         },
                         "authentication-optional" => {
                             "type" => BOOLEAN,
-                            "description" => "Allow for a SSLSession to still be established even if the authentication failed, this allows a fall through to use other authentication mechanisms.",
+                            "description" => "Rejecting of the client certificate by the security domain will not prevent the connection. Allows a fall through to use other authentication mechanisms (like form login) when the client certificate is rejected by security domain. Has an effect only when the security domain is set.",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "default" => false,
@@ -1732,7 +1735,7 @@
                         },
                         "need-client-auth" => {
                             "type" => BOOLEAN,
-                            "description" => "Set needClientAuth on the underlying SSLContext.",
+                            "description" => "To require a client certificate on SSL handshake. Connection without trusted client certificate (see trust-managers) will be rejected.",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "default" => false,
@@ -1749,9 +1752,9 @@
                                 "SSLv2",
                                 "SSLv3",
                                 "TLSv1",
-                                "TLSv1_1",
-                                "TLSv1_2",
-                                "TLSv1_3"
+                                "TLSv1.1",
+                                "TLSv1.2",
+                                "TLSv1.3"
                             ],
                             "value-type" => STRING,
                             "access-type" => "read-write",
@@ -1816,7 +1819,7 @@
                         },
                         "want-client-auth" => {
                             "type" => BOOLEAN,
-                            "description" => "Set wantClientAuth on the underlying SSLContext - if a security domain is referenced this will automatically be set to true.",
+                            "description" => "To request (but not to require) a client certificate on SSL handshake. If a security domain is referenced and supports X509 evidence, this will be set to true automatically. Ignored when need-client-auth is set.",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "default" => false,
@@ -2294,9 +2297,9 @@
                                 "SSLv2",
                                 "SSLv3",
                                 "TLSv1",
-                                "TLSv1_1",
-                                "TLSv1_2",
-                                "TLSv1_3"
+                                "TLSv1.1",
+                                "TLSv1.2",
+                                "TLSv1.3"
                             ],
                             "value-type" => STRING,
                             "access-type" => "read-write",
@@ -3607,23 +3610,18 @@
                     "attributes" => {
                         "authentication-level" => {
                             "type" => STRING,
-                            "description" => "The authentication level (security level) to use.",
+                            "description" => "The authentication level (security level/authentication mechanism) to use. Corresponds to SECURITY_AUTHENTICATION (\"java.naming.security.authentication\") environment property. Allowed values: \"none\", \"simple\", sasl_mech, where sasl_mech is a space-separated list of SASL mechanism names.",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "default" => "simple",
                             "min-length" => 1L,
                             "max-length" => 2147483647L,
-                            "allowed" => [
-                                "none",
-                                "simple",
-                                "strong"
-                            ],
                             "access-type" => "read-only",
                             "storage" => "configuration"
                         },
                         "credential" => {
                             "type" => STRING,
-                            "description" => "The credential to authenticate and connect to the LDAP server.",
+                            "description" => "The credential to authenticate and connect to the LDAP server. Can be omitted if authentication-level is \"none\" (anonymous).",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "min-length" => 1L,
@@ -3642,7 +3640,7 @@
                         },
                         "principal" => {
                             "type" => STRING,
-                            "description" => "The principal to authenticate and connect to the LDAP server.",
+                            "description" => "The principal to authenticate and connect to the LDAP server. Can be omitted if authentication-level is \"none\" (anonymous).",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "min-length" => 1L,
@@ -3668,7 +3666,7 @@
                         },
                         "ssl-context" => {
                             "type" => STRING,
-                            "description" => "SSL context to connect to the LDAP server.",
+                            "description" => "The name of ssl-context used to secure connection to the LDAP server.",
                             "expressions-allowed" => true,
                             "nillable" => true,
                             "capability-reference" => "org.wildfly.security.ssl-context",
@@ -3952,7 +3950,7 @@
                                     "type" => BOOLEAN,
                                     "description" => "Indicates if queries are recursive.",
                                     "expressions-allowed" => true,
-                                    "nillable" => false,
+                                    "nillable" => true,
                                     "default" => false,
                                     "requires" => ["search-base-dn"]
                                 },
@@ -4018,6 +4016,14 @@
                                         }
                                     }
                                 },
+                                "filter-name" => {
+                                    "type" => STRING,
+                                    "description" => "The LDAP filter for getting identity by name.",
+                                    "expressions-allowed" => true,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
                                 "iterator-filter" => {
                                     "type" => STRING,
                                     "description" => "The LDAP filter for iterating over identities of the realm.",
@@ -4044,7 +4050,7 @@
                                             "type" => STRING,
                                             "description" => "The attribute name.",
                                             "expressions-allowed" => true,
-                                            "nillable" => true,
+                                            "nillable" => false,
                                             "min-length" => 1L,
                                             "max-length" => 2147483647L
                                         },
@@ -4067,7 +4073,7 @@
                                             "type" => STRING,
                                             "description" => "The name of the LDAP attribute to map to an identity attribute.",
                                             "expressions-allowed" => true,
-                                            "nillable" => true,
+                                            "nillable" => false,
                                             "min-length" => 1L,
                                             "max-length" => 2147483647L
                                         },
@@ -4075,14 +4081,14 @@
                                             "type" => BOOLEAN,
                                             "description" => "Indicates if password can be changed.",
                                             "expressions-allowed" => true,
-                                            "nillable" => false,
+                                            "nillable" => true,
                                             "default" => false
                                         },
                                         "verifiable" => {
                                             "type" => BOOLEAN,
                                             "description" => "Indicates if password can be used to verify user.",
                                             "expressions-allowed" => true,
-                                            "nillable" => false,
+                                            "nillable" => true,
                                             "default" => true
                                         }
                                     }
@@ -4266,7 +4272,7 @@
                                 "relative-to" => {
                                     "type" => STRING,
                                     "description" => "The base path of the configuration file.",
-                                    "expressions-allowed" => true,
+                                    "expressions-allowed" => false,
                                     "nillable" => true,
                                     "requires" => ["path"],
                                     "min-length" => 1L,
@@ -4285,7 +4291,7 @@
                                             "expressions-allowed" => false,
                                             "nillable" => false
                                         },
-                                        "key" => {
+                                        "name" => {
                                             "type" => STRING,
                                             "description" => "The key for the property to be set.",
                                             "expressions-allowed" => true,
@@ -4355,7 +4361,7 @@
                             "type" => LIST,
                             "description" => "The filters to apply when comparing the mechanisms from the providers, a filter matches when all of the specified values match the mechanism / provider pair.",
                             "expressions-allowed" => false,
-                            "nillable" => false,
+                            "nillable" => true,
                             "value-type" => {
                                 "mechanism-name" => {
                                     "type" => STRING,
@@ -4502,7 +4508,7 @@
                             "type" => STRING,
                             "description" => "The relative path to the KeyTab",
                             "attribute-group" => "file",
-                            "expressions-allowed" => true,
+                            "expressions-allowed" => false,
                             "nillable" => true,
                             "requires" => ["path"],
                             "min-length" => 1L,
@@ -4559,6 +4565,53 @@
                             "access-type" => "read-write",
                             "storage" => "configuration",
                             "restart-required" => "no-services"
+                        }
+                    },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {}
+                }}
+            },
+            "identity-realm" => {
+                "description" => "A security realm definition where identities are represented in the management model.",
+                "model-description" => {"*" => {
+                    "description" => "A security realm definition where identities are represented in the management model.",
+                    "capabilities" => [{
+                        "name" => "org.wildfly.security.security-realm",
+                        "dynamic" => true
+                    }],
+                    "attributes" => {
+                        "attribute-name" => {
+                            "type" => STRING,
+                            "description" => "The name of the attribute associated with this identity.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "attribute-values" => {
+                            "type" => LIST,
+                            "description" => "The values associated with the identities attribute.",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "value-type" => STRING,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "identity" => {
+                            "type" => STRING,
+                            "description" => "The identity available from the security realm.",
+                            "expressions-allowed" => true,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
                         }
                     },
                     "operations" => undefined,
@@ -4662,7 +4715,6 @@
                     "attributes" => {"principal-query" => {
                         "type" => LIST,
                         "description" => "The authentication query used to authenticate users based on specific key types.",
-                        "attribute-group" => "attribute",
                         "expressions-allowed" => false,
                         "nillable" => true,
                         "value-type" => {
@@ -4701,7 +4753,9 @@
                                         "type" => INT,
                                         "description" => "The column index from a query that representing the mapped attribute.",
                                         "expressions-allowed" => true,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     }
                                 }
                             },
@@ -4714,7 +4768,9 @@
                                     "type" => INT,
                                     "description" => "The column index from an authentication query that represents the user's password.",
                                     "expressions-allowed" => false,
-                                    "nillable" => false
+                                    "nillable" => false,
+                                    "min" => 1L,
+                                    "max" => 2147483647L
                                 }}
                             },
                             "bcrypt-mapper" => {
@@ -4727,19 +4783,25 @@
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the user's password.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     },
                                     "salt-index" => {
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the password's salt, if supported.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     },
                                     "iteration-count-index" => {
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the password's iteration count, if supported.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     }
                                 }
                             },
@@ -4772,13 +4834,17 @@
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the user's password.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     },
                                     "salt-index" => {
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the password's salt, if supported.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     }
                                 }
                             },
@@ -4807,7 +4873,9 @@
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the user's password.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     }
                                 }
                             },
@@ -4832,19 +4900,25 @@
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the user's password.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     },
                                     "salt-index" => {
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the password's salt, if supported.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     },
                                     "iteration-count-index" => {
                                         "type" => INT,
                                         "description" => "The column index from an authentication query that represents the password's iteration count, if supported.",
                                         "expressions-allowed" => false,
-                                        "nillable" => false
+                                        "nillable" => false,
+                                        "min" => 1L,
+                                        "max" => 2147483647L
                                     }
                                 }
                             }
@@ -5039,6 +5113,30 @@
                     "children" => {}
                 }}
             },
+            "constant-realm-mapper" => {
+                "description" => "Definition of a constant RealmMapper that always returns the same value.",
+                "model-description" => {"*" => {
+                    "description" => "Definition of a constant RealmMapper that always returns the same value.",
+                    "capabilities" => [{
+                        "name" => "org.wildfly.security.realm-mapper",
+                        "dynamic" => true
+                    }],
+                    "attributes" => {"realm-name" => {
+                        "type" => STRING,
+                        "description" => "The name of the constant realm to return.",
+                        "expressions-allowed" => false,
+                        "nillable" => false,
+                        "min-length" => 1L,
+                        "max-length" => 2147483647L,
+                        "access-type" => "read-write",
+                        "storage" => "configuration",
+                        "restart-required" => "resource-services"
+                    }},
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {}
+                }}
+            },
             "aggregate-realm" => {
                 "description" => "A realm definition that is an aggregation of two realms, one for the authentication steps and one for loading the identity for the authorization steps.",
                 "model-description" => {"*" => {
@@ -5050,7 +5148,7 @@
                     "attributes" => {
                         "authentication-realm" => {
                             "type" => STRING,
-                            "description" => "Reference to the security realm to use for authentication.",
+                            "description" => "Reference to the security realm to use for authentication steps (obtaining or validating credentials).",
                             "expressions-allowed" => false,
                             "nillable" => false,
                             "capability-reference" => "org.wildfly.security.security-realm",
@@ -5062,7 +5160,7 @@
                         },
                         "authorization-realm" => {
                             "type" => STRING,
-                            "description" => "Reference to the security realm to use for loading the identity for authorization.",
+                            "description" => "Reference to the security realm to use for loading the identity for authorization steps (loading of the identity).",
                             "expressions-allowed" => false,
                             "nillable" => false,
                             "capability-reference" => "org.wildfly.security.security-realm",
@@ -5188,20 +5286,48 @@
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         },
-                        "key-password" => {
-                            "type" => STRING,
-                            "description" => "The password to decrypt KeyStore item. (Not a password of the KeyStore.)",
-                            "expressions-allowed" => true,
-                            "nillable" => false,
-                            "min-length" => 1L,
-                            "max-length" => 2147483647L,
-                            "deprecated" => {
-                                "since" => "1.0.0",
-                                "reason" => "Will be updated to use proper CredentialStore references."
+                        "credential-reference" => {
+                            "type" => OBJECT,
+                            "description" => "The credential reference to decrypt KeyStore item. (Not a password of the KeyStore.)",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "value-type" => {
+                                "store" => {
+                                    "type" => STRING,
+                                    "description" => "The name of the credential store holding the alias to credential.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "alias" => {
+                                    "type" => STRING,
+                                    "description" => "The alias which denotes stored secret or credential in the store.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "type" => {
+                                    "type" => STRING,
+                                    "description" => "The type of credential this reference is denoting.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "clear-text" => {
+                                    "type" => STRING,
+                                    "description" => "The secret specified using clear text. Check credential store way of supplying credential/secrets to services.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                }
                             },
                             "access-type" => "read-write",
                             "storage" => "configuration",
-                            "restart-required" => "resource-services"
+                            "restart-required" => "no-services"
                         },
                         "key-store" => {
                             "type" => STRING,
@@ -5341,6 +5467,133 @@
                     "children" => {}
                 }}
             },
+            "credential-store" => {
+                "description" => "Credential store to keep alias for sensitive information such as passwords for external services.",
+                "model-description" => {"*" => {
+                    "description" => "Credential store to keep alias for sensitive information such as passwords for external services.",
+                    "attributes" => {
+                        "state" => {
+                            "type" => STRING,
+                            "description" => "The state of the underlying service that represents this credential store at runtime.",
+                            "expressions-allowed" => false,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "allowed" => [
+                                "DOWN",
+                                "STARTING",
+                                "START_FAILED",
+                                "UP",
+                                "STOPPING",
+                                "REMOVED"
+                            ],
+                            "access-type" => "read-only",
+                            "storage" => "runtime"
+                        },
+                        "relative-to" => {
+                            "type" => STRING,
+                            "description" => "The base path this credential store path is relative to.",
+                            "attribute-group" => "file",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "provider" => {
+                            "type" => STRING,
+                            "description" => "Provider that provides implementation of this credential store.",
+                            "attribute-group" => "implementation",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "provider-loader" => {
+                            "type" => STRING,
+                            "description" => "The loader used to load the provider that contains implementation of this credential store type.",
+                            "attribute-group" => "implementation",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "capability-reference" => "org.wildfly.security.providers",
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "type" => {
+                            "type" => STRING,
+                            "description" => "Type of the credential store.",
+                            "attribute-group" => "implementation",
+                            "expressions-allowed" => true,
+                            "nillable" => true,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        },
+                        "uri" => {
+                            "type" => STRING,
+                            "description" => "Credential store URI to define this store (vault://)",
+                            "attribute-group" => "implementation",
+                            "expressions-allowed" => true,
+                            "nillable" => false,
+                            "min-length" => 1L,
+                            "max-length" => 2147483647L,
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "resource-services"
+                        }
+                    },
+                    "operations" => undefined,
+                    "notifications" => undefined,
+                    "children" => {"alias" => {
+                        "description" => "Alias of sensitive information (e.g. password) to be referenced later in configuration.",
+                        "model-description" => {"*" => {
+                            "description" => "Alias of sensitive information (e.g. password) to be referenced later in configuration.",
+                            "storage" => "runtime-only",
+                            "attributes" => {
+                                "entry-type" => {
+                                    "type" => STRING,
+                                    "description" => "Type of an credential (entry) stored in the credential store.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "allowed" => [
+                                        "org.wildfly.security.credential.PasswordCredential",
+                                        "Other"
+                                    ],
+                                    "access-type" => "read-write",
+                                    "storage" => "runtime",
+                                    "restart-required" => "no-services"
+                                },
+                                "secret-value" => {
+                                    "type" => STRING,
+                                    "description" => "Secret value such as password.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => false,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L,
+                                    "access-type" => "read-write",
+                                    "storage" => "runtime",
+                                    "restart-required" => "no-services"
+                                }
+                            },
+                            "operations" => undefined,
+                            "notifications" => undefined,
+                            "children" => {}
+                        }}
+                    }}
+                }}
+            },
             "regex-name-rewriter" => {
                 "description" => "A regular expression based Name Rewriter",
                 "model-description" => {"*" => {
@@ -5389,9 +5642,9 @@
                 }}
             },
             "custom-modifiable-realm" => {
-                "description" => "A custom security realm definition.",
+                "description" => "Custom realm configured as being modifiable will be expected to implement the ModifiableSecurityRealm interface. By configuring a realm as being modifiable management operations will be made available to manipulate the realm.",
                 "model-description" => {"*" => {
-                    "description" => "A custom security realm definition.",
+                    "description" => "Custom realm configured as being modifiable will be expected to implement the ModifiableSecurityRealm interface. By configuring a realm as being modifiable management operations will be made available to manipulate the realm.",
                     "capabilities" => [
                         {
                             "name" => "org.wildfly.security.security-realm",
@@ -5521,6 +5774,49 @@
                             "storage" => "configuration",
                             "restart-required" => "resource-services"
                         },
+                        "credential-reference" => {
+                            "type" => OBJECT,
+                            "description" => "The reference to credential stored in CredentialStore under defined alias or clear text password.",
+                            "expressions-allowed" => false,
+                            "nillable" => true,
+                            "value-type" => {
+                                "store" => {
+                                    "type" => STRING,
+                                    "description" => "The name of the credential store holding the alias to credential.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "alias" => {
+                                    "type" => STRING,
+                                    "description" => "The alias which denotes stored secret or credential in the store.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "type" => {
+                                    "type" => STRING,
+                                    "description" => "The type of credential this reference is denoting.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                },
+                                "clear-text" => {
+                                    "type" => STRING,
+                                    "description" => "Secret specified using clear text. Check credential store way of supplying credential/secrets to services.",
+                                    "expressions-allowed" => false,
+                                    "nillable" => true,
+                                    "min-length" => 1L,
+                                    "max-length" => 2147483647L
+                                }
+                            },
+                            "access-type" => "read-write",
+                            "storage" => "configuration",
+                            "restart-required" => "no-services"
+                        },
                         "loaded-provider" => {
                             "type" => OBJECT,
                             "description" => "Information about the provider that was used for this KeyStore.",
@@ -5560,21 +5856,6 @@
                             "nillable" => false,
                             "access-type" => "read-only",
                             "storage" => "runtime"
-                        },
-                        "password" => {
-                            "type" => STRING,
-                            "description" => "The password to use to load the KeyStore, this attribute will be replaced with the new vault solution.",
-                            "expressions-allowed" => true,
-                            "nillable" => true,
-                            "min-length" => 1L,
-                            "max-length" => 2147483647L,
-                            "deprecated" => {
-                                "since" => "1.0.0",
-                                "reason" => "Obtaining the password will be moved to the new vault capabilities."
-                            },
-                            "access-type" => "read-write",
-                            "storage" => "configuration",
-                            "restart-required" => "resource-services"
                         },
                         "size" => {
                             "type" => INT,
@@ -5628,7 +5909,7 @@
                             "type" => STRING,
                             "description" => "The base path this store is relative to.",
                             "attribute-group" => "file",
-                            "expressions-allowed" => true,
+                            "expressions-allowed" => false,
                             "nillable" => true,
                             "requires" => ["path"],
                             "min-length" => 1L,
@@ -6120,9 +6401,9 @@
                 }}
             },
             "custom-realm" => {
-                "description" => "A custom security realm definition.",
+                "description" => "A custom realm definitions can implement either the SecurityRealm interface or the ModifiableSecurityRealm interface. Regardless of which interface is implemented management operations will not be exposed to manage the realm.  However other services that depend on the realm will still be able to perform a type check and cast to gain access to the modification API.",
                 "model-description" => {"*" => {
-                    "description" => "A custom security realm definition.",
+                    "description" => "A custom realm definitions can implement either the SecurityRealm interface or the ModifiableSecurityRealm interface. Regardless of which interface is implemented management operations will not be exposed to manage the realm.  However other services that depend on the realm will still be able to perform a type check and cast to gain access to the modification API.",
                     "capabilities" => [{
                         "name" => "org.wildfly.security.security-realm",
                         "dynamic" => true
